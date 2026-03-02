@@ -191,7 +191,7 @@ label.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
 player.PlayerScripts:WaitForChild("PlayerModule"):WaitForChild("CameraModule"):WaitForChild("MouseLockController"):WaitForChild("BoundKeys").Value = "LeftShift"
 
 local lbltween = TweenService:Create(label, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextStrokeTransparency = 0.4, TextTransparency = 0 })
-local lbltween2 = TweenService:Create(label, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextStrokeTransparency = 0.4, TextTransparency = 0 })
+local lbltween2 = TweenService:Create(label, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextStrokeTransparency = 1, TextTransparency = 1 })
 
 CloseBtn.MouseButton1Click:Connect(function()
 	Main.Visible = false
