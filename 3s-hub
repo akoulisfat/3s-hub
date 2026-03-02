@@ -1,8 +1,19 @@
+-- ================================
+-- ITEM TESTER - by you
+-- Works with Delta, KRNL, Synapse
+-- ================================
+
 local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
 
 local player = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
+
+-- ================================
+-- CORE FUNCTIONS
+-- ================================
 
 local function wearAccessory(accessory)
     accessory.Parent = character
@@ -18,7 +29,6 @@ local function wearAccessory(accessory)
             weld.Part0 = hrp
             weld.Part1 = handle
             weld.Parent = handle
-            print("[ItemTester] Fallback weld to HumanoidRootPart")
         end
         return
     end
@@ -33,7 +43,6 @@ local function wearAccessory(accessory)
                 weld.C0 = match.CFrame
                 weld.C1 = accAttachment.CFrame
                 weld.Parent = handle
-                print("[ItemTester] Welded to " .. part.Name .. " via " .. accAttachment.Name)
                 return
             end
         end
@@ -45,7 +54,6 @@ local function wearAccessory(accessory)
         weld.Part0 = hrp
         weld.Part1 = handle
         weld.Parent = handle
-        print("[ItemTester] Fallback weld to HumanoidRootPart")
     end
 end
 
@@ -63,29 +71,24 @@ local function wearAsset(id)
     end)
 
     if not success or not asset then
-        warn("Wallahi impossible de mettre ca: " .. id)
-        return
+        return false, "Failed to load asset " .. id
     end
 
     local function processItem(item)
         if item:IsA("Accessory") then
             wearAccessory(item:Clone())
-
         elseif item:IsA("Shirt") then
             local old = character:FindFirstChildOfClass("Shirt")
             if old then old:Destroy() end
             item:Clone().Parent = character
-
         elseif item:IsA("Pants") then
             local old = character:FindFirstChildOfClass("Pants")
             if old then old:Destroy() end
             item:Clone().Parent = character
-
         elseif item:IsA("BodyColors") then
             local old = character:FindFirstChildOfClass("BodyColors")
             if old then old:Destroy() end
             item:Clone().Parent = character
-
         elseif item:IsA("CharacterMesh") then
             item:Clone().Parent = character
         end
@@ -99,9 +102,362 @@ local function wearAsset(id)
         processItem(asset)
     end
 
-    print("Cbon bg t un larp mtn: " .. id)
+    return true, "Wore asset " .. id
 end
 
-clearAccessories()
-wearAsset(21070012)
-wearAsset(1744060292)
+-- ================================
+-- GUI
+-- ================================
+
+-- Remove old GUI if re-running
+local old = game:GetService("CoreGui"):FindFirstChild("ItemTesterGui")
+if old then old:Destroy() end
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "ItemTesterGui"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.Parent = game:GetService("CoreGui")
+
+-- Main window
+local Main = Instance.new("Frame")
+Main.Name = "Main"
+Main.Size = UDim2.new(0, 320, 0, 420)
+Main.Position = UDim2.new(0.5, -160, 0.5, -210)
+Main.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+Main.BorderSizePixel = 0
+Main.ClipsDescendants = true
+Main.Parent = ScreenGui
+
+local MainCorner = Instance.new("UICorner")
+MainCorner.CornerRadius = UDim.new(0, 12)
+MainCorner.Parent = Main
+
+-- Accent line at top
+local AccentBar = Instance.new("Frame")
+AccentBar.Size = UDim2.new(1, 0, 0, 3)
+AccentBar.Position = UDim2.new(0, 0, 0, 0)
+AccentBar.BackgroundColor3 = Color3.fromRGB(100, 80, 255)
+AccentBar.BorderSizePixel = 0
+AccentBar.Parent = Main
+
+local AccentGradient = Instance.new("UIGradient")
+AccentGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(100, 80, 255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 80, 180))
+})
+AccentGradient.Parent = AccentBar
+
+-- Title bar (draggable)
+local TitleBar = Instance.new("Frame")
+TitleBar.Size = UDim2.new(1, 0, 0, 50)
+TitleBar.Position = UDim2.new(0, 0, 0, 3)
+TitleBar.BackgroundTransparency = 1
+TitleBar.Parent = Main
+
+local TitleLabel = Instance.new("TextLabel")
+TitleLabel.Text = "🧢  Item Tester"
+TitleLabel.Size = UDim2.new(1, -50, 1, 0)
+TitleLabel.Position = UDim2.new(0, 16, 0, 0)
+TitleLabel.BackgroundTransparency = 1
+TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+TitleLabel.Font = Enum.Font.GothamBold
+TitleLabel.TextSize = 16
+TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+TitleLabel.Parent = TitleBar
+
+local SubLabel = Instance.new("TextLabel")
+SubLabel.Text = "client-side only • visual only"
+SubLabel.Size = UDim2.new(1, -50, 0, 16)
+SubLabel.Position = UDim2.new(0, 16, 0, 32)
+SubLabel.BackgroundTransparency = 1
+SubLabel.TextColor3 = Color3.fromRGB(120, 120, 140)
+SubLabel.Font = Enum.Font.Gotham
+SubLabel.TextSize = 11
+SubLabel.TextXAlignment = Enum.TextXAlignment.Left
+SubLabel.Parent = Main
+
+-- Close button
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Text = "✕"
+CloseBtn.Size = UDim2.new(0, 30, 0, 30)
+CloseBtn.Position = UDim2.new(1, -40, 0, 12)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+CloseBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.TextSize = 13
+CloseBtn.BorderSizePixel = 0
+CloseBtn.Parent = Main
+
+local CloseCorner = Instance.new("UICorner")
+CloseCorner.CornerRadius = UDim.new(0, 8)
+CloseCorner.Parent = CloseBtn
+
+CloseBtn.MouseButton1Click:Connect(function()
+    ScreenGui:Destroy()
+end)
+
+-- Divider
+local Divider = Instance.new("Frame")
+Divider.Size = UDim2.new(1, -32, 0, 1)
+Divider.Position = UDim2.new(0, 16, 0, 58)
+Divider.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
+Divider.BorderSizePixel = 0
+Divider.Parent = Main
+
+-- Asset ID input label
+local InputLabel = Instance.new("TextLabel")
+InputLabel.Text = "ASSET ID"
+InputLabel.Size = UDim2.new(1, -32, 0, 14)
+InputLabel.Position = UDim2.new(0, 16, 0, 70)
+InputLabel.BackgroundTransparency = 1
+InputLabel.TextColor3 = Color3.fromRGB(100, 80, 255)
+InputLabel.Font = Enum.Font.GothamBold
+InputLabel.TextSize = 11
+InputLabel.TextXAlignment = Enum.TextXAlignment.Left
+InputLabel.Parent = Main
+
+-- Input box
+local InputBox = Instance.new("TextBox")
+InputBox.PlaceholderText = "e.g. 1365767"
+InputBox.Text = ""
+InputBox.Size = UDim2.new(1, -32, 0, 42)
+InputBox.Position = UDim2.new(0, 16, 0, 88)
+InputBox.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+InputBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+InputBox.PlaceholderColor3 = Color3.fromRGB(80, 80, 100)
+InputBox.Font = Enum.Font.Gotham
+InputBox.TextSize = 15
+InputBox.BorderSizePixel = 0
+InputBox.ClearTextOnFocus = false
+InputBox.Parent = Main
+
+local InputCorner = Instance.new("UICorner")
+InputCorner.CornerRadius = UDim.new(0, 8)
+InputCorner.Parent = InputBox
+
+local InputStroke = Instance.new("UIStroke")
+InputStroke.Color = Color3.fromRGB(50, 50, 70)
+InputStroke.Thickness = 1
+InputStroke.Parent = InputBox
+
+-- Highlight input on focus
+InputBox.Focused:Connect(function()
+    TweenService:Create(InputStroke, TweenInfo.new(0.2), {
+        Color = Color3.fromRGB(100, 80, 255)
+    }):Play()
+end)
+InputBox.FocusLost:Connect(function()
+    TweenService:Create(InputStroke, TweenInfo.new(0.2), {
+        Color = Color3.fromRGB(50, 50, 70)
+    }):Play()
+end)
+
+-- Wear button
+local WearBtn = Instance.new("TextButton")
+WearBtn.Text = "Wear Item"
+WearBtn.Size = UDim2.new(1, -32, 0, 42)
+WearBtn.Position = UDim2.new(0, 16, 0, 142)
+WearBtn.BackgroundColor3 = Color3.fromRGB(100, 80, 255)
+WearBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+WearBtn.Font = Enum.Font.GothamBold
+WearBtn.TextSize = 15
+WearBtn.BorderSizePixel = 0
+WearBtn.Parent = Main
+
+local WearCorner = Instance.new("UICorner")
+WearCorner.CornerRadius = UDim.new(0, 8)
+WearCorner.Parent = WearBtn
+
+local WearGradient = Instance.new("UIGradient")
+WearGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(100, 80, 255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(160, 80, 255))
+})
+WearGradient.Rotation = 90
+WearGradient.Parent = WearBtn
+
+-- Clear button
+local ClearBtn = Instance.new("TextButton")
+ClearBtn.Text = "Clear Accessories"
+ClearBtn.Size = UDim2.new(1, -32, 0, 38)
+ClearBtn.Position = UDim2.new(0, 16, 0, 196)
+ClearBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+ClearBtn.TextColor3 = Color3.fromRGB(200, 200, 210)
+ClearBtn.Font = Enum.Font.Gotham
+ClearBtn.TextSize = 14
+ClearBtn.BorderSizePixel = 0
+ClearBtn.Parent = Main
+
+local ClearCorner = Instance.new("UICorner")
+ClearCorner.CornerRadius = UDim.new(0, 8)
+ClearCorner.Parent = ClearBtn
+
+local ClearStroke = Instance.new("UIStroke")
+ClearStroke.Color = Color3.fromRGB(50, 50, 70)
+ClearStroke.Thickness = 1
+ClearStroke.Parent = ClearBtn
+
+-- Divider 2
+local Divider2 = Instance.new("Frame")
+Divider2.Size = UDim2.new(1, -32, 0, 1)
+Divider2.Position = UDim2.new(0, 16, 0, 248)
+Divider2.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
+Divider2.BorderSizePixel = 0
+Divider2.Parent = Main
+
+-- Log label
+local LogLabel = Instance.new("TextLabel")
+LogLabel.Text = "LOG"
+LogLabel.Size = UDim2.new(1, -32, 0, 14)
+LogLabel.Position = UDim2.new(0, 16, 0, 260)
+LogLabel.BackgroundTransparency = 1
+LogLabel.TextColor3 = Color3.fromRGB(100, 80, 255)
+LogLabel.Font = Enum.Font.GothamBold
+LogLabel.TextSize = 11
+LogLabel.TextXAlignment = Enum.TextXAlignment.Left
+LogLabel.Parent = Main
+
+-- Log box (scrollable)
+local LogFrame = Instance.new("ScrollingFrame")
+LogFrame.Size = UDim2.new(1, -32, 0, 130)
+LogFrame.Position = UDim2.new(0, 16, 0, 278)
+LogFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+LogFrame.BorderSizePixel = 0
+LogFrame.ScrollBarThickness = 3
+LogFrame.ScrollBarImageColor3 = Color3.fromRGB(100, 80, 255)
+LogFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+LogFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+LogFrame.Parent = Main
+
+local LogFrameCorner = Instance.new("UICorner")
+LogFrameCorner.CornerRadius = UDim.new(0, 8)
+LogFrameCorner.Parent = LogFrame
+
+local LogLayout = Instance.new("UIListLayout")
+LogLayout.Padding = UDim.new(0, 2)
+LogLayout.Parent = LogFrame
+
+local LogPadding = Instance.new("UIPadding")
+LogPadding.PaddingLeft = UDim.new(0, 8)
+LogPadding.PaddingTop = UDim.new(0, 6)
+LogPadding.PaddingRight = UDim.new(0, 8)
+LogPadding.Parent = LogFrame
+
+-- Log function
+local function log(msg, isError)
+    local entry = Instance.new("TextLabel")
+    entry.Text = msg
+    entry.Size = UDim2.new(1, 0, 0, 0)
+    entry.AutomaticSize = Enum.AutomaticSize.Y
+    entry.BackgroundTransparency = 1
+    entry.TextColor3 = isError and Color3.fromRGB(255, 80, 80) or Color3.fromRGB(160, 255, 160)
+    entry.Font = Enum.Font.Gotham
+    entry.TextSize = 11
+    entry.TextXAlignment = Enum.TextXAlignment.Left
+    entry.TextWrapped = true
+    entry.Parent = LogFrame
+
+    -- Auto scroll to bottom
+    task.wait()
+    LogFrame.CanvasPosition = Vector2.new(0, LogFrame.AbsoluteCanvasSize.Y)
+end
+
+-- ================================
+-- BUTTON LOGIC
+-- ================================
+
+-- Button hover animations
+local function buttonHover(btn, hoverColor, normalColor)
+    btn.MouseEnter:Connect(function()
+        TweenService:Create(btn, TweenInfo.new(0.15), {
+            BackgroundColor3 = hoverColor
+        }):Play()
+    end)
+    btn.MouseLeave:Connect(function()
+        TweenService:Create(btn, TweenInfo.new(0.15), {
+            BackgroundColor3 = normalColor
+        }):Play()
+    end)
+end
+
+buttonHover(WearBtn, Color3.fromRGB(130, 100, 255), Color3.fromRGB(100, 80, 255))
+buttonHover(ClearBtn, Color3.fromRGB(35, 35, 50), Color3.fromRGB(25, 25, 35))
+buttonHover(CloseBtn, Color3.fromRGB(255, 60, 60), Color3.fromRGB(40, 40, 50))
+
+WearBtn.MouseButton1Click:Connect(function()
+    local id = tonumber(InputBox.Text)
+    if not id then
+        log("⚠ Invalid ID: '" .. InputBox.Text .. "'", true)
+        return
+    end
+
+    WearBtn.Text = "Loading..."
+    local ok, msg = wearAsset(id)
+    WearBtn.Text = "Wear Item"
+
+    if ok then
+        log("✔ Wore asset " .. id, false)
+    else
+        log("✘ " .. msg, true)
+    end
+end)
+
+ClearBtn.MouseButton1Click:Connect(function()
+    clearAccessories()
+    log("✔ Cleared all accessories", false)
+end)
+
+-- Press enter to wear
+InputBox.FocusLost:Connect(function(entered)
+    if entered then
+        WearBtn.MouseButton1Click:Fire()
+    end
+end)
+
+-- ================================
+-- DRAGGING (fixed v2)
+-- ================================
+
+local dragging = false
+local dragStart, startPos
+
+UserInputService.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        local mousePos = input.Position
+        local titlePos = TitleBar.AbsolutePosition
+        local titleSize = TitleBar.AbsoluteSize
+
+        if mousePos.X >= titlePos.X and mousePos.X <= titlePos.X + titleSize.X
+        and mousePos.Y >= titlePos.Y and mousePos.Y <= titlePos.Y + titleSize.Y then
+            dragging = true
+            dragStart = mousePos
+            startPos = Main.Position
+        end
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if dragging and input.UserInputType == Enum.UserInputType.MouseMove then
+        local delta = input.Position - dragStart
+        Main.Position = UDim2.new(
+            startPos.X.Scale,
+            startPos.X.Offset + delta.X,
+            startPos.Y.Scale,
+            startPos.Y.Offset + delta.Y
+        )
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = false
+    end
+end)
+
+-- ================================
+-- DONE
+-- ================================
+
+log("✔ Item Tester loaded!", false)
+print("[ItemTester] GUI loaded successfully")
