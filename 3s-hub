@@ -1,7 +1,3 @@
--- ================================
--- ITEM TESTER - by you
--- Works with Delta, KRNL, Synapse
--- ================================
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -16,93 +12,93 @@ local humanoid = character:WaitForChild("Humanoid")
 -- ================================
 
 local function wearAccessory(accessory)
-    accessory.Parent = character
+	accessory.Parent = character
 
-    local handle = accessory:FindFirstChild("Handle")
-    if not handle then return end
+	local handle = accessory:FindFirstChild("Handle")
+	if not handle then return end
 
-    local accAttachment = handle:FindFirstChildOfClass("Attachment")
-    if not accAttachment then
-        local hrp = character:FindFirstChild("HumanoidRootPart")
-        if hrp then
-            local weld = Instance.new("Weld")
-            weld.Part0 = hrp
-            weld.Part1 = handle
-            weld.Parent = handle
-        end
-        return
-    end
+	local accAttachment = handle:FindFirstChildOfClass("Attachment")
+	if not accAttachment then
+		local hrp = character:FindFirstChild("HumanoidRootPart")
+		if hrp then
+			local weld = Instance.new("Weld")
+			weld.Part0 = hrp
+			weld.Part1 = handle
+			weld.Parent = handle
+		end
+		return
+	end
 
-    for _, part in pairs(character:GetChildren()) do
-        if part:IsA("BasePart") then
-            local match = part:FindFirstChild(accAttachment.Name)
-            if match then
-                local weld = Instance.new("Weld")
-                weld.Part0 = part
-                weld.Part1 = handle
-                weld.C0 = match.CFrame
-                weld.C1 = accAttachment.CFrame
-                weld.Parent = handle
-                return
-            end
-        end
-    end
+	for _, part in pairs(character:GetChildren()) do
+		if part:IsA("BasePart") then
+			local match = part:FindFirstChild(accAttachment.Name)
+			if match then
+				local weld = Instance.new("Weld")
+				weld.Part0 = part
+				weld.Part1 = handle
+				weld.C0 = match.CFrame
+				weld.C1 = accAttachment.CFrame
+				weld.Parent = handle
+				return
+			end
+		end
+	end
 
-    local hrp = character:FindFirstChild("HumanoidRootPart")
-    if hrp then
-        local weld = Instance.new("Weld")
-        weld.Part0 = hrp
-        weld.Part1 = handle
-        weld.Parent = handle
-    end
+	local hrp = character:FindFirstChild("HumanoidRootPart")
+	if hrp then
+		local weld = Instance.new("Weld")
+		weld.Part0 = hrp
+		weld.Part1 = handle
+		weld.Parent = handle
+	end
 end
 
 local function clearAccessories()
-    for _, item in pairs(character:GetChildren()) do
-        if item:IsA("Accessory") then
-            item:Destroy()
-        end
-    end
+	for _, item in pairs(character:GetChildren()) do
+		if item:IsA("Accessory") then
+			item:Destroy()
+		end
+	end
 end
 
 local function wearAsset(id)
-    local success, asset = pcall(function()
-        return game:GetObjects("rbxassetid://" .. id)[1]
-    end)
+	local success, asset = pcall(function()
+		return game:GetObjects("rbxassetid://" .. id)[1]
+	end)
 
-    if not success or not asset then
-        return false, "Failed to load asset " .. id
-    end
+	if not success or not asset then
+		return false, "Failed to load asset " .. id
+	end
 
-    local function processItem(item)
-        if item:IsA("Accessory") then
-            wearAccessory(item:Clone())
-        elseif item:IsA("Shirt") then
-            local old = character:FindFirstChildOfClass("Shirt")
-            if old then old:Destroy() end
-            item:Clone().Parent = character
-        elseif item:IsA("Pants") then
-            local old = character:FindFirstChildOfClass("Pants")
-            if old then old:Destroy() end
-            item:Clone().Parent = character
-        elseif item:IsA("BodyColors") then
-            local old = character:FindFirstChildOfClass("BodyColors")
-            if old then old:Destroy() end
-            item:Clone().Parent = character
-        elseif item:IsA("CharacterMesh") then
-            item:Clone().Parent = character
-        end
-    end
+	local function processItem(item)
+		if item:IsA("Accessory") then
+			wearAccessory(item:Clone())
+		elseif item:IsA("Shirt") then
+			local old = character:FindFirstChildOfClass("Shirt")
+			if old then old:Destroy() end
+			item:Clone().Parent = character
+		elseif item:IsA("Pants") then
+			local old = character:FindFirstChildOfClass("Pants")
+			if old then old:Destroy() end
+			item:Clone().Parent = character
+		elseif item:IsA("BodyColors") then
+			local old = character:FindFirstChildOfClass("BodyColors")
+			if old then old:Destroy() end
+			item:Clone().Parent = character
+		elseif item:IsA("CharacterMesh") then
+			item:Clone().Parent = character
+		end
+	end
 
-    if asset:IsA("Model") then
-        for _, item in pairs(asset:GetChildren()) do
-            processItem(item)
-        end
-    else
-        processItem(asset)
-    end
+	if asset:IsA("Model") then
+		for _, item in pairs(asset:GetChildren()) do
+			processItem(item)
+		end
+	else
+		processItem(asset)
+	end
 
-    return true, "Wore asset " .. id
+	return true, "Wore asset " .. id
 end
 
 -- ================================
@@ -110,11 +106,11 @@ end
 -- ================================
 
 -- Remove old GUI if re-running
-local old = game:GetService("CoreGui"):FindFirstChild("ItemTesterGui")
+local old = game:GetService("CoreGui"):FindFirstChild("3sHubGui")
 if old then old:Destroy() end
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "ItemTesterGui"
+ScreenGui.Name = "3sHubGui"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.Parent = game:GetService("CoreGui")
@@ -133,21 +129,6 @@ local MainCorner = Instance.new("UICorner")
 MainCorner.CornerRadius = UDim.new(0, 12)
 MainCorner.Parent = Main
 
--- Accent line at top
-local AccentBar = Instance.new("Frame")
-AccentBar.Size = UDim2.new(1, 0, 0, 3)
-AccentBar.Position = UDim2.new(0, 0, 0, 0)
-AccentBar.BackgroundColor3 = Color3.fromRGB(100, 80, 255)
-AccentBar.BorderSizePixel = 0
-AccentBar.Parent = Main
-
-local AccentGradient = Instance.new("UIGradient")
-AccentGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(100, 80, 255)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 80, 180))
-})
-AccentGradient.Parent = AccentBar
-
 -- Title bar (draggable)
 local TitleBar = Instance.new("Frame")
 TitleBar.Size = UDim2.new(1, 0, 0, 50)
@@ -156,7 +137,7 @@ TitleBar.BackgroundTransparency = 1
 TitleBar.Parent = Main
 
 local TitleLabel = Instance.new("TextLabel")
-TitleLabel.Text = "🧢  Item Tester"
+TitleLabel.Text = "3s HUB"
 TitleLabel.Size = UDim2.new(1, -50, 1, 0)
 TitleLabel.Position = UDim2.new(0, 16, 0, 0)
 TitleLabel.BackgroundTransparency = 1
@@ -179,7 +160,7 @@ SubLabel.Parent = Main
 
 -- Close button
 local CloseBtn = Instance.new("TextButton")
-CloseBtn.Text = "✕"
+CloseBtn.Text = "X"
 CloseBtn.Size = UDim2.new(0, 30, 0, 30)
 CloseBtn.Position = UDim2.new(1, -40, 0, 12)
 CloseBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
@@ -193,8 +174,30 @@ local CloseCorner = Instance.new("UICorner")
 CloseCorner.CornerRadius = UDim.new(0, 8)
 CloseCorner.Parent = CloseBtn
 
+local label = Instance.new("TextLabel", ScreenGui)
+label.Text = "RightShift to open 3s HUB"
+label.BackgroundTransparency = 1
+label.BorderSizePixel = 0
+label.AnchorPoint = Vector2.new(0.5, 0.5)
+label.Position = UDim2.new(0.9, 0, 0.97, 0)
+label.Size = UDim2.new(0.2, 0, 0.025, 0)
+label.Font = Enum.Font.GothamBold
+label.TextScaled = true
+label.TextColor3 = Color3.fromRGB(255, 255, 255)
+label.TextStrokeTransparency = 0.4
+label.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+
+player.PlayerScripts:WaitForChild("PlayerModule"):WaitForChild("CameraModule"):WaitForChild("MouseLockController"):WaitForChild("BoundKeys").Value = "LeftShift"
+
 CloseBtn.MouseButton1Click:Connect(function()
-    ScreenGui:Destroy()
+	Main.Visible = false
+end)
+
+UserInputService.InputBegan:Connect(function(key, gameprocessed)
+	if gameprocessed then return end
+	if key.KeyCode == Enum.KeyCode.RightShift then
+		Main.Visible = not Main.Visible
+	end
 end)
 
 -- Divider
@@ -243,14 +246,14 @@ InputStroke.Parent = InputBox
 
 -- Highlight input on focus
 InputBox.Focused:Connect(function()
-    TweenService:Create(InputStroke, TweenInfo.new(0.2), {
-        Color = Color3.fromRGB(100, 80, 255)
-    }):Play()
+	TweenService:Create(InputStroke, TweenInfo.new(0.2), {
+		Color = Color3.fromRGB(100, 80, 255)
+	}):Play()
 end)
 InputBox.FocusLost:Connect(function()
-    TweenService:Create(InputStroke, TweenInfo.new(0.2), {
-        Color = Color3.fromRGB(50, 50, 70)
-    }):Play()
+	TweenService:Create(InputStroke, TweenInfo.new(0.2), {
+		Color = Color3.fromRGB(50, 50, 70)
+	}):Play()
 end)
 
 -- Wear button
@@ -271,8 +274,8 @@ WearCorner.Parent = WearBtn
 
 local WearGradient = Instance.new("UIGradient")
 WearGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(100, 80, 255)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(160, 80, 255))
+	ColorSequenceKeypoint.new(0, Color3.fromRGB(100, 80, 255)),
+	ColorSequenceKeypoint.new(1, Color3.fromRGB(160, 80, 255))
 })
 WearGradient.Rotation = 90
 WearGradient.Parent = WearBtn
@@ -344,23 +347,60 @@ LogPadding.PaddingTop = UDim.new(0, 6)
 LogPadding.PaddingRight = UDim.new(0, 8)
 LogPadding.Parent = LogFrame
 
+local draggableFrame = Main
+local IsDragging = false 	--checks if the player is dragging the frame
+local dragInput				--input variable which we will use later
+local StartingPoint
+local oldPos		
+
+local function update(input)
+	local delta = input.Position - StartingPoint
+	draggableFrame.Position = UDim2.new(oldPos.X.Scale, oldPos.X.Offset + delta.X, oldPos.Y.Scale, oldPos.Y.Offset + delta.Y)
+end
+
+draggableFrame.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		IsDragging = true
+		StartingPoint = input.Position
+		oldPos = draggableFrame.Position
+
+		input.Changed:Connect(function()
+			if input.UserInputState == Enum.UserInputState.End then
+				IsDragging = false
+			end
+		end)
+	end
+end)
+
+draggableFrame.InputChanged:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseMovement then
+		dragInput = input
+	end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+	if input == dragInput and IsDragging then
+		update(input)
+	end
+end)
+
 -- Log function
 local function log(msg, isError)
-    local entry = Instance.new("TextLabel")
-    entry.Text = msg
-    entry.Size = UDim2.new(1, 0, 0, 0)
-    entry.AutomaticSize = Enum.AutomaticSize.Y
-    entry.BackgroundTransparency = 1
-    entry.TextColor3 = isError and Color3.fromRGB(255, 80, 80) or Color3.fromRGB(160, 255, 160)
-    entry.Font = Enum.Font.Gotham
-    entry.TextSize = 11
-    entry.TextXAlignment = Enum.TextXAlignment.Left
-    entry.TextWrapped = true
-    entry.Parent = LogFrame
+	local entry = Instance.new("TextLabel")
+	entry.Text = msg
+	entry.Size = UDim2.new(1, 0, 0, 0)
+	entry.AutomaticSize = Enum.AutomaticSize.Y
+	entry.BackgroundTransparency = 1
+	entry.TextColor3 = isError and Color3.fromRGB(255, 80, 80) or Color3.fromRGB(160, 255, 160)
+	entry.Font = Enum.Font.Gotham
+	entry.TextSize = 11
+	entry.TextXAlignment = Enum.TextXAlignment.Left
+	entry.TextWrapped = true
+	entry.Parent = LogFrame
 
-    -- Auto scroll to bottom
-    task.wait()
-    LogFrame.CanvasPosition = Vector2.new(0, LogFrame.AbsoluteCanvasSize.Y)
+	-- Auto scroll to bottom
+	task.wait()
+	LogFrame.CanvasPosition = Vector2.new(0, LogFrame.AbsoluteCanvasSize.Y)
 end
 
 -- ================================
@@ -369,16 +409,16 @@ end
 
 -- Button hover animations
 local function buttonHover(btn, hoverColor, normalColor)
-    btn.MouseEnter:Connect(function()
-        TweenService:Create(btn, TweenInfo.new(0.15), {
-            BackgroundColor3 = hoverColor
-        }):Play()
-    end)
-    btn.MouseLeave:Connect(function()
-        TweenService:Create(btn, TweenInfo.new(0.15), {
-            BackgroundColor3 = normalColor
-        }):Play()
-    end)
+	btn.MouseEnter:Connect(function()
+		TweenService:Create(btn, TweenInfo.new(0.15), {
+			BackgroundColor3 = hoverColor
+		}):Play()
+	end)
+	btn.MouseLeave:Connect(function()
+		TweenService:Create(btn, TweenInfo.new(0.15), {
+			BackgroundColor3 = normalColor
+		}):Play()
+	end)
 end
 
 buttonHover(WearBtn, Color3.fromRGB(130, 100, 255), Color3.fromRGB(100, 80, 255))
@@ -386,78 +426,37 @@ buttonHover(ClearBtn, Color3.fromRGB(35, 35, 50), Color3.fromRGB(25, 25, 35))
 buttonHover(CloseBtn, Color3.fromRGB(255, 60, 60), Color3.fromRGB(40, 40, 50))
 
 WearBtn.MouseButton1Click:Connect(function()
-    local id = tonumber(InputBox.Text)
-    if not id then
-        log("⚠ Invalid ID: '" .. InputBox.Text .. "'", true)
-        return
-    end
+	local id = tonumber(InputBox.Text)
+	if not id then
+		log("⚠ Invalid ID: '" .. InputBox.Text .. "'", true)
+		return
+	end
 
-    WearBtn.Text = "Loading..."
-    local ok, msg = wearAsset(id)
-    WearBtn.Text = "Wear Item"
+	WearBtn.Text = "Loading..."
+	local ok, msg = wearAsset(id)
+	WearBtn.Text = "Wear Item"
 
-    if ok then
-        log("✔ Wore asset " .. id, false)
-    else
-        log("✘ " .. msg, true)
-    end
+	if ok then
+		log("✔ Wore asset " .. id, false)
+	else
+		log("✘ " .. msg, true)
+	end
 end)
 
 ClearBtn.MouseButton1Click:Connect(function()
-    clearAccessories()
-    log("✔ Cleared all accessories", false)
+	clearAccessories()
+	log("✔ Cleared all accessories", false)
 end)
 
 -- Press enter to wear
 InputBox.FocusLost:Connect(function(entered)
-    if entered then
-        WearBtn.MouseButton1Click:Fire()
-    end
-end)
-
--- ================================
--- DRAGGING (fixed v2)
--- ================================
-
-local dragging = false
-local dragStart, startPos
-
-UserInputService.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        local mousePos = input.Position
-        local titlePos = TitleBar.AbsolutePosition
-        local titleSize = TitleBar.AbsoluteSize
-
-        if mousePos.X >= titlePos.X and mousePos.X <= titlePos.X + titleSize.X
-        and mousePos.Y >= titlePos.Y and mousePos.Y <= titlePos.Y + titleSize.Y then
-            dragging = true
-            dragStart = mousePos
-            startPos = Main.Position
-        end
-    end
-end)
-
-UserInputService.InputChanged:Connect(function(input)
-    if dragging and input.UserInputType == Enum.UserInputType.MouseMove then
-        local delta = input.Position - dragStart
-        Main.Position = UDim2.new(
-            startPos.X.Scale,
-            startPos.X.Offset + delta.X,
-            startPos.Y.Scale,
-            startPos.Y.Offset + delta.Y
-        )
-    end
-end)
-
-UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = false
-    end
+	if entered then
+		WearBtn.MouseButton1Click:Fire()
+	end
 end)
 
 -- ================================
 -- DONE
 -- ================================
 
-log("✔ Item Tester loaded!", false)
-print("[ItemTester] GUI loaded successfully")
+log("✔ 3s hub loaded!", false)
