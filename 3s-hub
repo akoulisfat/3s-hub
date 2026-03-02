@@ -1,3 +1,107 @@
 local Players = game:GetService("Players")
-local InsertService = game:GetService("InsertService")
 
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+
+local function wearAccessory(accessory)
+    accessory.Parent = character
+
+    local handle = accessory:FindFirstChild("Handle")
+    if not handle then return end
+
+    local accAttachment = handle:FindFirstChildOfClass("Attachment")
+    if not accAttachment then
+        local hrp = character:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            local weld = Instance.new("Weld")
+            weld.Part0 = hrp
+            weld.Part1 = handle
+            weld.Parent = handle
+            print("[ItemTester] Fallback weld to HumanoidRootPart")
+        end
+        return
+    end
+
+    for _, part in pairs(character:GetChildren()) do
+        if part:IsA("BasePart") then
+            local match = part:FindFirstChild(accAttachment.Name)
+            if match then
+                local weld = Instance.new("Weld")
+                weld.Part0 = part
+                weld.Part1 = handle
+                weld.C0 = match.CFrame
+                weld.C1 = accAttachment.CFrame
+                weld.Parent = handle
+                print("[ItemTester] Welded to " .. part.Name .. " via " .. accAttachment.Name)
+                return
+            end
+        end
+    end
+
+    local hrp = character:FindFirstChild("HumanoidRootPart")
+    if hrp then
+        local weld = Instance.new("Weld")
+        weld.Part0 = hrp
+        weld.Part1 = handle
+        weld.Parent = handle
+        print("[ItemTester] Fallback weld to HumanoidRootPart")
+    end
+end
+
+local function clearAccessories()
+    for _, item in pairs(character:GetChildren()) do
+        if item:IsA("Accessory") then
+            item:Destroy()
+        end
+    end
+end
+
+local function wearAsset(id)
+    local success, asset = pcall(function()
+        return game:GetObjects("rbxassetid://" .. id)[1]
+    end)
+
+    if not success or not asset then
+        warn("Wallahi impossible de mettre ca: " .. id)
+        return
+    end
+
+    local function processItem(item)
+        if item:IsA("Accessory") then
+            wearAccessory(item:Clone())
+
+        elseif item:IsA("Shirt") then
+            local old = character:FindFirstChildOfClass("Shirt")
+            if old then old:Destroy() end
+            item:Clone().Parent = character
+
+        elseif item:IsA("Pants") then
+            local old = character:FindFirstChildOfClass("Pants")
+            if old then old:Destroy() end
+            item:Clone().Parent = character
+
+        elseif item:IsA("BodyColors") then
+            local old = character:FindFirstChildOfClass("BodyColors")
+            if old then old:Destroy() end
+            item:Clone().Parent = character
+
+        elseif item:IsA("CharacterMesh") then
+            item:Clone().Parent = character
+        end
+    end
+
+    if asset:IsA("Model") then
+        for _, item in pairs(asset:GetChildren()) do
+            processItem(item)
+        end
+    else
+        processItem(asset)
+    end
+
+    print("Cbon bg t un larp mtn: " .. id)
+end
+
+clearAccessories()
+wearAsset(21070012)
+wearAsset(1744060292)
