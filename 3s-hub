@@ -84,6 +84,10 @@ local function wearAsset(id)
 			local old = character:FindFirstChildOfClass("BodyColors")
 			if old then old:Destroy() end
 			item:Clone().Parent = character
+		elseif item:IsA("Face") then
+			local old = character:FindFirstChildOfClass("Face")
+			if old then old:Destroy() end
+			item:Clone().Parent = character
 		elseif item:IsA("CharacterMesh") then
 			item:Clone().Parent = character
 		end
