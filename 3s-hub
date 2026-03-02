@@ -101,9 +101,10 @@ local function wearAsset(id)
 end
 
 -- ================================
--- GUI SETUP
+-- GUI
 -- ================================
 
+-- Remove old GUI if re-running
 local old = game:GetService("CoreGui"):FindFirstChild("3sHubGui")
 if old then old:Destroy() end
 
@@ -113,88 +114,11 @@ ScreenGui.ResetOnSpawn = false
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.Parent = game:GetService("CoreGui")
 
--- ================================
--- TOAST NOTIFICATION (bottom right)
--- ================================
-
-local Toast = Instance.new("Frame")
-Toast.Name = "Toast"
-Toast.Size = UDim2.new(0, 240, 0, 64)
-Toast.Position = UDim2.new(1, 20, 1, -80) -- starts off screen to the right
-Toast.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
-Toast.BorderSizePixel = 0
-Toast.ZIndex = 10
-Toast.Parent = ScreenGui
-
-local ToastCorner = Instance.new("UICorner")
-ToastCorner.CornerRadius = UDim.new(0, 10)
-ToastCorner.Parent = Toast
-
-local ToastAccent = Instance.new("Frame")
-ToastAccent.Size = UDim2.new(0, 3, 1, 0)
-ToastAccent.Position = UDim2.new(0, 0, 0, 0)
-ToastAccent.BackgroundColor3 = Color3.fromRGB(100, 80, 255)
-ToastAccent.BorderSizePixel = 0
-ToastAccent.ZIndex = 11
-ToastAccent.Parent = Toast
-
-local ToastAccentCorner = Instance.new("UICorner")
-ToastAccentCorner.CornerRadius = UDim.new(0, 10)
-ToastAccentCorner.Parent = ToastAccent
-
-local ToastStroke = Instance.new("UIStroke")
-ToastStroke.Color = Color3.fromRGB(50, 50, 70)
-ToastStroke.Thickness = 1
-ToastStroke.Parent = Toast
-
-local ToastTitle = Instance.new("TextLabel")
-ToastTitle.Text = "3s HUB loaded"
-ToastTitle.Size = UDim2.new(1, -20, 0, 20)
-ToastTitle.Position = UDim2.new(0, 14, 0, 10)
-ToastTitle.BackgroundTransparency = 1
-ToastTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
-ToastTitle.Font = Enum.Font.GothamBold
-ToastTitle.TextSize = 13
-ToastTitle.TextXAlignment = Enum.TextXAlignment.Left
-ToastTitle.ZIndex = 11
-ToastTitle.Parent = Toast
-
-local ToastSub = Instance.new("TextLabel")
-ToastSub.Text = "Press RightShift to toggle"
-ToastSub.Size = UDim2.new(1, -20, 0, 16)
-ToastSub.Position = UDim2.new(0, 14, 0, 34)
-ToastSub.BackgroundTransparency = 1
-ToastSub.TextColor3 = Color3.fromRGB(120, 120, 140)
-ToastSub.Font = Enum.Font.Gotham
-ToastSub.TextSize = 11
-ToastSub.TextXAlignment = Enum.TextXAlignment.Left
-ToastSub.ZIndex = 11
-ToastSub.Parent = Toast
-
--- Slide in then slide out after 5 seconds
-local slideIn = TweenService:Create(Toast, TweenInfo.new(0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
-	Position = UDim2.new(1, -260, 1, -80)
-})
-local slideOut = TweenService:Create(Toast, TweenInfo.new(0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.In), {
-	Position = UDim2.new(1, 20, 1, -80)
-})
-
-slideIn:Play()
-task.delay(5, function()
-	slideOut:Play()
-	slideOut.Completed:Connect(function()
-		Toast:Destroy()
-	end)
-end)
-
--- ================================
--- MAIN WINDOW
--- ================================
-
+-- Main window
 local Main = Instance.new("Frame")
 Main.Name = "Main"
-Main.Size = UDim2.new(0, 320, 0, 450)
-Main.Position = UDim2.new(0.5, -160, 0.5, -225)
+Main.Size = UDim2.new(0, 320, 0, 420)
+Main.Position = UDim2.new(0.5, -160, 0.5, -210)
 Main.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
 Main.BorderSizePixel = 0
 Main.ClipsDescendants = true
@@ -204,22 +128,7 @@ local MainCorner = Instance.new("UICorner")
 MainCorner.CornerRadius = UDim.new(0, 12)
 MainCorner.Parent = Main
 
--- Accent line at top
-local AccentBar = Instance.new("Frame")
-AccentBar.Size = UDim2.new(1, 0, 0, 3)
-AccentBar.Position = UDim2.new(0, 0, 0, 0)
-AccentBar.BackgroundColor3 = Color3.fromRGB(100, 80, 255)
-AccentBar.BorderSizePixel = 0
-AccentBar.Parent = Main
-
-local AccentGradient = Instance.new("UIGradient")
-AccentGradient.Color = ColorSequence.new({
-	ColorSequenceKeypoint.new(0, Color3.fromRGB(100, 80, 255)),
-	ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 80, 180))
-})
-AccentGradient.Parent = AccentBar
-
--- Title bar
+-- Title bar (draggable)
 local TitleBar = Instance.new("Frame")
 TitleBar.Size = UDim2.new(1, 0, 0, 50)
 TitleBar.Position = UDim2.new(0, 0, 0, 3)
@@ -263,6 +172,44 @@ CloseBtn.Parent = Main
 local CloseCorner = Instance.new("UICorner")
 CloseCorner.CornerRadius = UDim.new(0, 8)
 CloseCorner.Parent = CloseBtn
+
+local label = Instance.new("TextLabel", ScreenGui)
+label.Text = "RightShift to open 3s HUB"
+label.BackgroundTransparency = 1
+label.BorderSizePixel = 0
+label.AnchorPoint = Vector2.new(0.5, 0.5)
+label.Position = UDim2.new(0.9, 0, 0.97, 0)
+label.Size = UDim2.new(0.2, 0, 0.025, 0)
+label.Font = Enum.Font.GothamBold
+label.TextScaled = true
+label.TextColor3 = Color3.fromRGB(255, 255, 255)
+label.TextStrokeTransparency = 1
+label.TextTransparency = 1
+label.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+
+player.PlayerScripts:WaitForChild("PlayerModule"):WaitForChild("CameraModule"):WaitForChild("MouseLockController"):WaitForChild("BoundKeys").Value = "LeftShift"
+
+local lbltween = TweenService:Create(label, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextStrokeTransparency = 0.4, TextTransparency = 0 })
+local lbltween2 = TweenService:Create(label, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextStrokeTransparency = 1, TextTransparency = 1 })
+
+CloseBtn.MouseButton1Click:Connect(function()
+	Main.Visible = false
+	lbltween2:Pause()
+	lbltween:Play()
+	task.wait(3)
+	lbltween2:Play()
+end)
+
+UserInputService.InputBegan:Connect(function(key, gameprocessed)
+	if gameprocessed then return end
+	if key.KeyCode == Enum.KeyCode.RightShift then
+		Main.Visible = not Main.Visible
+		lbltween2:Pause()
+		lbltween:Play()
+		task.wait(1.5)
+		lbltween2:Play()
+	end
+end)
 
 -- Divider
 local Divider = Instance.new("Frame")
@@ -308,6 +255,7 @@ InputStroke.Color = Color3.fromRGB(50, 50, 70)
 InputStroke.Thickness = 1
 InputStroke.Parent = InputBox
 
+-- Highlight input on focus
 InputBox.Focused:Connect(function()
 	TweenService:Create(InputStroke, TweenInfo.new(0.2), {
 		Color = Color3.fromRGB(100, 80, 255)
@@ -384,9 +332,9 @@ LogLabel.TextSize = 11
 LogLabel.TextXAlignment = Enum.TextXAlignment.Left
 LogLabel.Parent = Main
 
--- Log box
+-- Log box (scrollable)
 local LogFrame = Instance.new("ScrollingFrame")
-LogFrame.Size = UDim2.new(1, -32, 0, 110)
+LogFrame.Size = UDim2.new(1, -32, 0, 130)
 LogFrame.Position = UDim2.new(0, 16, 0, 278)
 LogFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
 LogFrame.BorderSizePixel = 0
@@ -410,30 +358,44 @@ LogPadding.PaddingTop = UDim.new(0, 6)
 LogPadding.PaddingRight = UDim.new(0, 8)
 LogPadding.Parent = LogFrame
 
--- Divider 3
-local Divider3 = Instance.new("Frame")
-Divider3.Size = UDim2.new(1, -32, 0, 1)
-Divider3.Position = UDim2.new(0, 16, 0, 400)
-Divider3.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
-Divider3.BorderSizePixel = 0
-Divider3.Parent = Main
+local draggableFrame = Main
+local IsDragging = false 	--checks if the player is dragging the frame
+local dragInput				--input variable which we will use later
+local StartingPoint
+local oldPos		
 
--- Credits
-local Credits = Instance.new("TextLabel")
-Credits.Text = "made by Spatcher, akoul21 and 1uzfe"
-Credits.Size = UDim2.new(1, -32, 0, 20)
-Credits.Position = UDim2.new(0, 16, 0, 418)
-Credits.BackgroundTransparency = 1
-Credits.TextColor3 = Color3.fromRGB(70, 70, 90)
-Credits.Font = Enum.Font.Gotham
-Credits.TextSize = 10
-Credits.TextXAlignment = Enum.TextXAlignment.Center
-Credits.Parent = Main
+local function update(input)
+	local delta = input.Position - StartingPoint
+	draggableFrame.Position = UDim2.new(oldPos.X.Scale, oldPos.X.Offset + delta.X, oldPos.Y.Scale, oldPos.Y.Offset + delta.Y)
+end
 
--- ================================
--- LOG FUNCTION
--- ================================
+draggableFrame.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		IsDragging = true
+		StartingPoint = input.Position
+		oldPos = draggableFrame.Position
 
+		input.Changed:Connect(function()
+			if input.UserInputState == Enum.UserInputState.End then
+				IsDragging = false
+			end
+		end)
+	end
+end)
+
+draggableFrame.InputChanged:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseMovement then
+		dragInput = input
+	end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+	if input == dragInput and IsDragging then
+		update(input)
+	end
+end)
+
+-- Log function
 local function log(msg, isError)
 	local entry = Instance.new("TextLabel")
 	entry.Text = msg
@@ -447,6 +409,7 @@ local function log(msg, isError)
 	entry.TextWrapped = true
 	entry.Parent = LogFrame
 
+	-- Auto scroll to bottom
 	task.wait()
 	LogFrame.CanvasPosition = Vector2.new(0, LogFrame.AbsoluteCanvasSize.Y)
 end
@@ -455,12 +418,17 @@ end
 -- BUTTON LOGIC
 -- ================================
 
+-- Button hover animations
 local function buttonHover(btn, hoverColor, normalColor)
 	btn.MouseEnter:Connect(function()
-		TweenService:Create(btn, TweenInfo.new(0.15), { BackgroundColor3 = hoverColor }):Play()
+		TweenService:Create(btn, TweenInfo.new(0.15), {
+			BackgroundColor3 = hoverColor
+		}):Play()
 	end)
 	btn.MouseLeave:Connect(function()
-		TweenService:Create(btn, TweenInfo.new(0.15), { BackgroundColor3 = normalColor }):Play()
+		TweenService:Create(btn, TweenInfo.new(0.15), {
+			BackgroundColor3 = normalColor
+		}):Play()
 	end)
 end
 
@@ -474,9 +442,11 @@ WearBtn.MouseButton1Click:Connect(function()
 		log("⚠ Invalid ID: '" .. InputBox.Text .. "'", true)
 		return
 	end
+
 	WearBtn.Text = "Loading..."
 	local ok, msg = wearAsset(id)
 	WearBtn.Text = "Wear Item"
+
 	if ok then
 		log("✔ Wore asset " .. id, false)
 	else
@@ -489,65 +459,10 @@ ClearBtn.MouseButton1Click:Connect(function()
 	log("✔ Cleared all accessories", false)
 end)
 
+-- Press enter to wear
 InputBox.FocusLost:Connect(function(entered)
 	if entered then
 		WearBtn.MouseButton1Click:Fire()
-	end
-end)
-
-CloseBtn.MouseButton1Click:Connect(function()
-	Main.Visible = false
-end)
-
--- RightShift to toggle
-player.PlayerScripts:WaitForChild("PlayerModule"):WaitForChild("CameraModule"):WaitForChild("MouseLockController"):WaitForChild("BoundKeys").Value = "LeftShift"
-
-UserInputService.InputBegan:Connect(function(key, gameprocessed)
-	if gameprocessed then return end
-	if key.KeyCode == Enum.KeyCode.RightShift then
-		Main.Visible = not Main.Visible
-	end
-end)
-
--- ================================
--- DRAGGING
--- ================================
-
-local IsDragging = false
-local dragInput, StartingPoint, oldPos
-
-local function update(input)
-	local delta = input.Position - StartingPoint
-	Main.Position = UDim2.new(oldPos.X.Scale, oldPos.X.Offset + delta.X, oldPos.Y.Scale, oldPos.Y.Offset + delta.Y)
-end
-
-Main.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 then
-		-- Only drag if clicking in the title bar area
-		local mouseY = input.Position.Y
-		local mainTop = Main.AbsolutePosition.Y
-		if mouseY <= mainTop + 53 then
-			IsDragging = true
-			StartingPoint = input.Position
-			oldPos = Main.Position
-			input.Changed:Connect(function()
-				if input.UserInputState == Enum.UserInputState.End then
-					IsDragging = false
-				end
-			end)
-		end
-	end
-end)
-
-Main.InputChanged:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseMovement then
-		dragInput = input
-	end
-end)
-
-UserInputService.InputChanged:Connect(function(input)
-	if input == dragInput and IsDragging then
-		update(input)
 	end
 end)
 
