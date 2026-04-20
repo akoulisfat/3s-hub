@@ -1,3 +1,3 @@
 # 3s-hub
 
-### Made by Spatcher, akoul21 and 1uzfe
+### Made by svceuse, 4oqu and ax4c
