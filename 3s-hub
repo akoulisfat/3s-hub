@@ -710,7 +710,63 @@ end
 
 -- Serialize current outfit
 
+local accessoryListInitialized = false
+
+local function addUniqueAssetId(list, id)
+    id = tonumber(id)
+
+    if not id or id <= 0 then
+        return
+    end
+
+    for _, existing in ipairs(list) do
+        if tonumber(existing) == id then
+            return
+        end
+    end
+
+    table.insert(list, id)
+end
+
+local function seedOriginalAccessories()
+    if accessoryListInitialized then
+        return
+    end
+
+    accessoryListInitialized = true
+
+    local currentHumanoid = getCurrentHumanoid()
+    if not currentHumanoid then
+        return
+    end
+
+    local ok, description = pcall(function()
+        return currentHumanoid:GetAppliedDescription()
+    end)
+
+    if not ok or not description then
+        return
+    end
+
+    local success, accessories = pcall(function()
+        return description:GetAccessories(true)
+    end)
+
+    if success then
+        for _, accessory in ipairs(accessories) do
+            addUniqueAssetId(wornAssetIds, accessory.AssetId)
+        end
+    end
+
+    description:Destroy()
+end
+
+seedOriginalAccessories()
+
 local function captureOutfit()
+
+    seedOriginalAccessories()
+
     local currentHumanoid = getCurrentHumanoid()
 
     if not currentHumanoid then
@@ -728,11 +784,11 @@ local function captureOutfit()
     local data = {
         Properties = {},
         Accessories = {},
+        Assets = table.clone(wornAssetIds)
     }
 
-	data.Assets = table.clone(wornAssetIds)
-
     for _, property in ipairs(DESCRIPTION_PROPERTIES) do
+
         local ok, value = pcall(function()
             return description[property]
         end)
@@ -747,22 +803,6 @@ local function captureOutfit()
             else
                 data.Properties[property] = value
             end
-        end
-    end
-
-    local accessoriesOK, accessories = pcall(function()
-        return description:GetAccessories(true)
-    end)
-
-    if accessoriesOK then
-        for _, accessory in ipairs(accessories) do
-            table.insert(data.Accessories, {
-                AssetId = accessory.AssetId,
-                AccessoryType = accessory.AccessoryType.Name,
-                IsLayered = accessory.IsLayered,
-                Order = accessory.Order,
-                Puffiness = accessory.Puffiness
-            })
         end
     end
 
@@ -815,6 +855,7 @@ end
 -- Load outfit
 
 local function loadOutfit(name, silent)
+
     name = safeName(name)
 
     if name == "" then
@@ -825,18 +866,14 @@ local function loadOutfit(name, silent)
     end
 
     if not ensureFolders() then
-        if not silent then
-            log("File API unavailable", true)
-        end
+        log("File API unavailable", true)
         return false
     end
 
     local path = outfitPath(name)
 
     if not isfile(path) then
-        if not silent then
-            log("Outfit not found: " .. name, true)
-        end
+        log("Outfit not found: " .. name, true)
         return false
     end
 
@@ -849,86 +886,193 @@ local function loadOutfit(name, silent)
         return false
     end
 
-    local currentHumanoid = getCurrentHumanoid()
+    local char = player.Character
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
 
-    if not currentHumanoid then
+    if not char or not hum then
         log("Character not found", true)
         return false
     end
 
-    local description = Instance.new("HumanoidDescription")
+    character = char
+    humanoid = hum
 
-    -- Restore properties
+    local properties = data.Properties or {}
 
-    for property, value in pairs(data.Properties or {}) do
-        pcall(function()
-            if COLOR_PROPERTIES[property] then
-                description[property] = Color3.new(
-                    value.R,
-                    value.G,
-                    value.B
-                )
-            else
-                description[property] = value
-            end
-        end)
-    end
+    -- Collecte les accessoires des anciennes et nouvelles sauvegardes
 
-    -- Restore layered and classic accessories
+    local assetIds = {}
+    local seen = {}
 
-    local accessories = {}
+    for _, id in ipairs(data.Assets or {}) do
+        id = tonumber(id)
 
-    for _, item in ipairs(data.Accessories or {}) do
-        local accessoryType = Enum.AccessoryType[item.AccessoryType]
-
-        if accessoryType then
-            table.insert(accessories, {
-                AssetId = item.AssetId,
-                AccessoryType = accessoryType,
-                IsLayered = item.IsLayered == true,
-                Order = item.Order or 0,
-                Puffiness = item.Puffiness or 0
-            })
+        if id and id > 0 and not seen[id] then
+            seen[id] = true
+            table.insert(assetIds, id)
         end
     end
 
-    pcall(function()
-        description:SetAccessories(accessories, true)
-    end)
+    -- Compatibilité avec les anciennes sauvegardes JSON
 
-    -- Apply to character
+    for _, item in ipairs(data.Accessories or {}) do
+        local id = tonumber(item.AssetId)
 
-    local applied, applyError = pcall(function()
-        currentHumanoid:ApplyDescription(description)
-    end)
+        if id and id > 0 and not seen[id] then
+            seen[id] = true
+            table.insert(assetIds, id)
+        end
+    end
 
-	description:Destroy()
-	
-	if not applied then
-	    log("Apply failed: " .. tostring(applyError), true)
-	    return false
-	end
-	
-	-- Restore manually loaded assets
-	
-	wornAssetIds = {}
-	isRestoringOutfit = true
-	
-	for _, assetId in ipairs(data.Assets or {}) do
-	    local ok, err = wearAsset(assetId)
-	
-	    if not ok then
-	        log("Asset restore failed: " .. tostring(assetId), true)
-	    end
-	end
-	
-	isRestoringOutfit = false
-	
-	config.lastOutfit = name
-	saveConfig()
-	
-	log("Loaded outfit: " .. name, false)
-	return true
+    -- Nettoyage de l'apparence locale
+
+    for _, item in ipairs(char:GetChildren()) do
+
+        if item:IsA("Accessory")
+        or item:IsA("Shirt")
+        or item:IsA("Pants")
+        or item:IsA("ShirtGraphic")
+        or item:IsA("BodyColors")
+        or item:IsA("CharacterMesh") then
+
+            item:Destroy()
+        end
+    end
+
+    local head = char:FindFirstChild("Head")
+
+    if head then
+        for _, item in ipairs(head:GetChildren()) do
+            if item:IsA("Decal") and item.Name:lower() == "face" then
+                item:Destroy()
+            end
+        end
+    end
+
+    -- Shirt
+
+    local shirtId = tonumber(properties.Shirt)
+
+    if shirtId and shirtId > 0 then
+        local shirt = Instance.new("Shirt")
+        shirt.ShirtTemplate = "rbxassetid://" .. shirtId
+        shirt.Parent = char
+    end
+
+    -- Pants
+
+    local pantsId = tonumber(properties.Pants)
+
+    if pantsId and pantsId > 0 then
+        local pants = Instance.new("Pants")
+        pants.PantsTemplate = "rbxassetid://" .. pantsId
+        pants.Parent = char
+    end
+
+    -- Graphic T-Shirt
+
+    local graphicId = tonumber(properties.GraphicTShirt)
+
+    if graphicId and graphicId > 0 then
+        local graphic = Instance.new("ShirtGraphic")
+        graphic.Graphic = "rbxassetid://" .. graphicId
+        graphic.Parent = char
+    end
+
+    -- Face
+
+    local faceId = tonumber(properties.Face)
+
+    if head and faceId and faceId > 0 then
+        local face = Instance.new("Decal")
+        face.Name = "face"
+        face.Texture = "rbxassetid://" .. faceId
+        face.Parent = head
+    end
+
+    -- Body colors
+
+    local bodyColors = Instance.new("BodyColors")
+
+    local colorMap = {
+        HeadColor = "HeadColor3",
+        TorsoColor = "TorsoColor3",
+        LeftArmColor = "LeftArmColor3",
+        RightArmColor = "RightArmColor3",
+        LeftLegColor = "LeftLegColor3",
+        RightLegColor = "RightLegColor3"
+    }
+
+    for property, bodyProperty in pairs(colorMap) do
+
+        local color = properties[property]
+
+        if type(color) == "table" then
+
+            pcall(function()
+                bodyColors[bodyProperty] = Color3.new(
+                    tonumber(color.R) or 1,
+                    tonumber(color.G) or 1,
+                    tonumber(color.B) or 1
+                )
+            end)
+
+        end
+    end
+
+    bodyColors.Parent = char
+
+    -- R15 scale values, when available
+
+    local scaleMap = {
+        HeightScale = "BodyHeightScale",
+        WidthScale = "BodyWidthScale",
+        DepthScale = "BodyDepthScale",
+        HeadScale = "HeadScale",
+        BodyTypeScale = "BodyTypeScale",
+        ProportionScale = "BodyProportionScale"
+    }
+
+    for property, scaleName in pairs(scaleMap) do
+
+        local value = tonumber(properties[property])
+        local scaleObject = hum:FindFirstChild(scaleName)
+
+        if value and scaleObject and scaleObject:IsA("NumberValue") then
+            scaleObject.Value = value
+        end
+    end
+
+    -- Restore accessories and manually worn assets
+
+    wornAssetIds = {}
+    isRestoringOutfit = true
+
+    for _, assetId in ipairs(assetIds) do
+
+        local callOK, loaded, err = pcall(wearAsset, assetId)
+
+        if not callOK or not loaded then
+            log(
+                "Could not restore asset " .. tostring(assetId),
+                true
+            )
+        end
+
+    end
+
+    isRestoringOutfit = false
+
+    -- Preserve the IDs for the next save
+
+    wornAssetIds = table.clone(assetIds)
+
+    config.lastOutfit = name
+    saveConfig()
+
+    log("Loaded outfit locally: " .. name, false)
+
+    return true
 end
 
 -- Delete outfit
