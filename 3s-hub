@@ -113,12 +113,12 @@ local function wearAsset(id)
 		end
 	end
 
-	if asset:IsA("Model") then
-		for _, item in pairs(asset:GetChildren()) do
-			processItem(item)
-		end
+	if asset:IsA("Model") or asset:IsA("Folder") then
+	    for _, item in ipairs(asset:GetDescendants()) do
+	        processItem(item)
+	    end
 	else
-		processItem(asset)
+	    processItem(asset)
 	end
 
 	if not isRestoringOutfit then
@@ -787,6 +787,29 @@ local function captureOutfit()
         Assets = table.clone(wornAssetIds)
     }
 
+	-- Save actual 2D clothing templates
+	local char = player.Character
+	
+	data.ClassicClothes = {}
+	
+	if char then
+	    local shirt = char:FindFirstChildOfClass("Shirt")
+	    local pants = char:FindFirstChildOfClass("Pants")
+	    local graphic = char:FindFirstChildOfClass("ShirtGraphic")
+	
+	    if shirt then
+	        data.ClassicClothes.Shirt = shirt.ShirtTemplate
+	    end
+	
+	    if pants then
+	        data.ClassicClothes.Pants = pants.PantsTemplate
+	    end
+	
+	    if graphic then
+	        data.ClassicClothes.Graphic = graphic.Graphic
+	    end
+	end
+
     for _, property in ipairs(DESCRIPTION_PROPERTIES) do
 
         local ok, value = pcall(function()
@@ -949,35 +972,52 @@ local function loadOutfit(name, silent)
         end
     end
 
-    -- Shirt
+-- Restore classic 2D clothing
 
-    local shirtId = tonumber(properties.Shirt)
+local classic = data.ClassicClothes or {}
 
-    if shirtId and shirtId > 0 then
-        local shirt = Instance.new("Shirt")
-        shirt.ShirtTemplate = "rbxassetid://" .. shirtId
-        shirt.Parent = char
+local function restoreClothing(className, propertyName, templateProperty, fallbackId)
+
+    local template = classic[propertyName]
+
+    -- Fallback for outfits saved with the older format
+    if type(template) ~= "string" or template == "" then
+        local id = tonumber(fallbackId)
+
+        if id and id > 0 then
+            template = "rbxassetid://" .. id
+        end
     end
 
-    -- Pants
+    if type(template) == "string" and template ~= "" then
 
-    local pantsId = tonumber(properties.Pants)
+        local clothing = Instance.new(className)
+        clothing[templateProperty] = template
+        clothing.Parent = char
 
-    if pantsId and pantsId > 0 then
-        local pants = Instance.new("Pants")
-        pants.PantsTemplate = "rbxassetid://" .. pantsId
-        pants.Parent = char
     end
+end
 
-    -- Graphic T-Shirt
+restoreClothing(
+    "Shirt",
+    "Shirt",
+    "ShirtTemplate",
+    properties.Shirt
+)
 
-    local graphicId = tonumber(properties.GraphicTShirt)
+restoreClothing(
+    "Pants",
+    "Pants",
+    "PantsTemplate",
+    properties.Pants
+)
 
-    if graphicId and graphicId > 0 then
-        local graphic = Instance.new("ShirtGraphic")
-        graphic.Graphic = "rbxassetid://" .. graphicId
-        graphic.Parent = char
-    end
+restoreClothing(
+    "ShirtGraphic",
+    "Graphic",
+    "Graphic",
+    properties.GraphicTShirt
+)
 
     -- Face
 
