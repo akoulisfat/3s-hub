@@ -7,6 +7,11 @@ local player = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
 
+player.CharacterAdded:Connect(function(newCharacter)
+    character = newCharacter
+    humanoid = newCharacter:WaitForChild("Humanoid")
+end)
+
 -- ================================
 -- CORE FUNCTIONS
 -- ================================
@@ -592,17 +597,33 @@ local config = {
 }
 
 local function ensureFolders()
-    if type(makefolder) ~= "function" then
-        return false
+
+    local requiredFunctions = {
+        "makefolder",
+        "readfile",
+        "writefile",
+        "isfile",
+        "delfile"
+    }
+
+    for _, functionName in ipairs(requiredFunctions) do
+        if type(getgenv()[functionName]) ~= "function"
+        and type(_G[functionName]) ~= "function" then
+            return false
+        end
     end
 
-    pcall(makefolder, "3sHub")
-    pcall(makefolder, OUTFIT_FOLDER)
+    pcall(function()
+        if not isfolder("3sHub") then
+            makefolder("3sHub")
+        end
 
-    return type(readfile) == "function"
-        and type(writefile) == "function"
-        and type(isfile) == "function"
-        and type(delfile) == "function"
+        if not isfolder(OUTFIT_FOLDER) then
+            makefolder(OUTFIT_FOLDER)
+        end
+    end)
+
+    return true
 end
 
 local function safeName(name)
@@ -625,6 +646,11 @@ local function saveConfig()
 end
 
 local function loadConfig()
+
+    if not ensureFolders() then
+        return
+    end
+
     if not isfile(CONFIG_FILE) then
         return
     end
@@ -1077,14 +1103,44 @@ WearBtn.MouseButton1Click:Connect(function()
 end)
 
 ClearBtn.MouseButton1Click:Connect(function()
-	clearAccessories()
-	log("✔ Cleared all accessories", false)
+
+    clearAccessories()
+
+    wornAssetIds = {}
+
+    log("✔ Cleared all accessories", false)
+
 end)
 
+local function wearInputAsset()
+
+    local id = tonumber(InputBox.Text)
+
+    if not id then
+        log("⚠ Invalid ID: '" .. InputBox.Text .. "'", true)
+        return
+    end
+
+    WearBtn.Text = "Loading..."
+
+    local ok, msg = wearAsset(id)
+
+    WearBtn.Text = "Wear Item"
+
+    if ok then
+        log("✔ Wore asset " .. id, false)
+    else
+        log("✘ " .. msg, true)
+    end
+
+end
+
+WearBtn.MouseButton1Click:Connect(wearInputAsset)
+
 InputBox.FocusLost:Connect(function(entered)
-	if entered then
-		WearBtn.MouseButton1Click:Fire()
-	end
+    if entered then
+        wearInputAsset()
+    end
 end)
 
 CloseBtn.MouseButton1Click:Connect(function()
