@@ -550,18 +550,6 @@ Credits.TextSize = 10
 Credits.TextXAlignment = Enum.TextXAlignment.Center
 Credits.Parent = Main
 
--- Credits
-local Credits = Instance.new("TextLabel")
-Credits.Text = "made by Spatcher, akoul21 and 1uzfe"
-Credits.Size = UDim2.new(1, -32, 0, 20)
-Credits.Position = UDim2.new(0, 16, 0, 418)
-Credits.BackgroundTransparency = 1
-Credits.TextColor3 = Color3.fromRGB(70, 70, 90)
-Credits.Font = Enum.Font.Gotham
-Credits.TextSize = 10
-Credits.TextXAlignment = Enum.TextXAlignment.Center
-Credits.Parent = Main
-
 -- ================================
 -- LOG FUNCTION
 -- ================================
