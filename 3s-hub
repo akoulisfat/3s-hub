@@ -60,6 +60,9 @@ local function clearAccessories()
 	end
 end
 
+local wornAssetIds = {}
+local isRestoringOutfit = false
+
 local function wearAsset(id)
 	local success, asset = pcall(function()
 		return game:GetObjects("rbxassetid://" .. id)[1]
@@ -110,6 +113,10 @@ local function wearAsset(id)
 		end
 	else
 		processItem(asset)
+	end
+
+	if not isRestoringOutfit then
+	    table.insert(wornAssetIds, tonumber(id))
 	end
 
 	return true, "Wore asset " .. id
@@ -206,8 +213,8 @@ end
 
 local Main = Instance.new("Frame")
 Main.Name = "Main"
-Main.Size = UDim2.new(0, 320, 0, 450)
-Main.Position = UDim2.new(0.5, -160, 0.5, -225)
+Main.Size = UDim2.new(0, 320, 0, 600)
+Main.Position = UDim2.new(0.5, -160, 0.5, -300)
 Main.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
 Main.BorderSizePixel = 0
 Main.ClipsDescendants = true
@@ -377,7 +384,11 @@ ClearStroke.Color = Color3.fromRGB(50, 50, 70)
 ClearStroke.Thickness = 1
 ClearStroke.Parent = ClearBtn
 
--- Divider 2
+
+-- ================================
+-- OUTFIT MANAGER UI
+-- ================================
+
 local Divider2 = Instance.new("Frame")
 Divider2.Size = UDim2.new(1, -32, 0, 1)
 Divider2.Position = UDim2.new(0, 16, 0, 248)
@@ -385,11 +396,104 @@ Divider2.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
 Divider2.BorderSizePixel = 0
 Divider2.Parent = Main
 
--- Log label
+local OutfitLabel = Instance.new("TextLabel")
+OutfitLabel.Text = "OUTFIT MANAGER"
+OutfitLabel.Size = UDim2.new(1, -32, 0, 14)
+OutfitLabel.Position = UDim2.new(0, 16, 0, 260)
+OutfitLabel.BackgroundTransparency = 1
+OutfitLabel.TextColor3 = Color3.fromRGB(100, 80, 255)
+OutfitLabel.Font = Enum.Font.GothamBold
+OutfitLabel.TextSize = 11
+OutfitLabel.TextXAlignment = Enum.TextXAlignment.Left
+OutfitLabel.Parent = Main
+
+-- Outfit name input
+
+local OutfitNameBox = Instance.new("TextBox")
+OutfitNameBox.PlaceholderText = "Outfit name (e.g. MyOutfit)"
+OutfitNameBox.Text = ""
+OutfitNameBox.Size = UDim2.new(1, -32, 0, 36)
+OutfitNameBox.Position = UDim2.new(0, 16, 0, 280)
+OutfitNameBox.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+OutfitNameBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+OutfitNameBox.PlaceholderColor3 = Color3.fromRGB(80, 80, 100)
+OutfitNameBox.Font = Enum.Font.Gotham
+OutfitNameBox.TextSize = 13
+OutfitNameBox.BorderSizePixel = 0
+OutfitNameBox.ClearTextOnFocus = false
+OutfitNameBox.Parent = Main
+
+local OutfitInputCorner = Instance.new("UICorner")
+OutfitInputCorner.CornerRadius = UDim.new(0, 8)
+OutfitInputCorner.Parent = OutfitNameBox
+
+local function createOutfitButton(name, text, position, size, color)
+    local btn = Instance.new("TextButton")
+    btn.Name = name
+    btn.Text = text
+    btn.Size = size
+    btn.Position = position
+    btn.BackgroundColor3 = color
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 12
+    btn.BorderSizePixel = 0
+    btn.Parent = Main
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 8)
+    corner.Parent = btn
+
+    return btn
+end
+
+local SaveOutfitBtn = createOutfitButton(
+    "SaveOutfit",
+    "Save Outfit",
+    UDim2.new(0, 16, 0, 326),
+    UDim2.new(0, 140, 0, 36),
+    Color3.fromRGB(100, 80, 255)
+)
+
+local LoadOutfitBtn = createOutfitButton(
+    "LoadOutfit",
+    "Load Outfit",
+    UDim2.new(0, 164, 0, 326),
+    UDim2.new(0, 140, 0, 36),
+    Color3.fromRGB(60, 100, 180)
+)
+
+local DeleteOutfitBtn = createOutfitButton(
+    "DeleteOutfit",
+    "Delete Outfit",
+    UDim2.new(0, 16, 0, 370),
+    UDim2.new(0, 140, 0, 32),
+    Color3.fromRGB(150, 45, 55)
+)
+
+local AutoLoadBtn = createOutfitButton(
+    "AutoLoad",
+    "Auto Load: OFF",
+    UDim2.new(0, 164, 0, 370),
+    UDim2.new(0, 140, 0, 32),
+    Color3.fromRGB(35, 35, 50)
+)
+
+-- ================================
+-- LOG SECTION
+-- ================================
+
+local Divider3 = Instance.new("Frame")
+Divider3.Size = UDim2.new(1, -32, 0, 1)
+Divider3.Position = UDim2.new(0, 16, 0, 414)
+Divider3.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
+Divider3.BorderSizePixel = 0
+Divider3.Parent = Main
+
 local LogLabel = Instance.new("TextLabel")
 LogLabel.Text = "LOG"
 LogLabel.Size = UDim2.new(1, -32, 0, 14)
-LogLabel.Position = UDim2.new(0, 16, 0, 260)
+LogLabel.Position = UDim2.new(0, 16, 0, 426)
 LogLabel.BackgroundTransparency = 1
 LogLabel.TextColor3 = Color3.fromRGB(100, 80, 255)
 LogLabel.Font = Enum.Font.GothamBold
@@ -397,10 +501,9 @@ LogLabel.TextSize = 11
 LogLabel.TextXAlignment = Enum.TextXAlignment.Left
 LogLabel.Parent = Main
 
--- Log box
 local LogFrame = Instance.new("ScrollingFrame")
-LogFrame.Size = UDim2.new(1, -32, 0, 110)
-LogFrame.Position = UDim2.new(0, 16, 0, 278)
+LogFrame.Size = UDim2.new(1, -32, 0, 100)
+LogFrame.Position = UDim2.new(0, 16, 0, 444)
 LogFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
 LogFrame.BorderSizePixel = 0
 LogFrame.ScrollBarThickness = 3
@@ -423,13 +526,23 @@ LogPadding.PaddingTop = UDim.new(0, 6)
 LogPadding.PaddingRight = UDim.new(0, 8)
 LogPadding.Parent = LogFrame
 
--- Divider 3
-local Divider3 = Instance.new("Frame")
-Divider3.Size = UDim2.new(1, -32, 0, 1)
-Divider3.Position = UDim2.new(0, 16, 0, 400)
-Divider3.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
-Divider3.BorderSizePixel = 0
-Divider3.Parent = Main
+local Divider4 = Instance.new("Frame")
+Divider4.Size = UDim2.new(1, -32, 0, 1)
+Divider4.Position = UDim2.new(0, 16, 0, 554)
+Divider4.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
+Divider4.BorderSizePixel = 0
+Divider4.Parent = Main
+
+local Credits = Instance.new("TextLabel")
+Credits.Text = "made by Spatcher, akoul21 and 1uzfe"
+Credits.Size = UDim2.new(1, -32, 0, 20)
+Credits.Position = UDim2.new(0, 16, 0, 568)
+Credits.BackgroundTransparency = 1
+Credits.TextColor3 = Color3.fromRGB(70, 70, 90)
+Credits.Font = Enum.Font.Gotham
+Credits.TextSize = 10
+Credits.TextXAlignment = Enum.TextXAlignment.Center
+Credits.Parent = Main
 
 -- Credits
 local Credits = Instance.new("TextLabel")
@@ -464,6 +577,391 @@ local function log(msg, isError)
 	LogFrame.CanvasPosition = Vector2.new(0, LogFrame.AbsoluteCanvasSize.Y)
 end
 
+
+-- ================================
+-- OUTFIT STORAGE SYSTEM
+-- ================================
+
+local OUTFIT_FOLDER = "3sHub/Outfits"
+local CONFIG_FILE = "3sHub/config.json"
+
+local config = {
+    autoLoad = false,
+    lastOutfit = ""
+}
+
+local function ensureFolders()
+    if type(makefolder) ~= "function" then
+        return false
+    end
+
+    pcall(makefolder, "3sHub")
+    pcall(makefolder, OUTFIT_FOLDER)
+
+    return type(readfile) == "function"
+        and type(writefile) == "function"
+        and type(isfile) == "function"
+        and type(delfile) == "function"
+end
+
+local function safeName(name)
+    name = tostring(name or "")
+    name = name:gsub("^%s+", ""):gsub("%s+$", "")
+    name = name:gsub("[^%w_%-]", "_")
+    return name
+end
+
+local function outfitPath(name)
+    return OUTFIT_FOLDER .. "/" .. safeName(name) .. ".json"
+end
+
+local function saveConfig()
+    local ok, result = pcall(function()
+        writefile(CONFIG_FILE, HttpService:JSONEncode(config))
+    end)
+
+    return ok
+end
+
+local function loadConfig()
+    if not isfile(CONFIG_FILE) then
+        return
+    end
+
+    local ok, data = pcall(function()
+        return HttpService:JSONDecode(readfile(CONFIG_FILE))
+    end)
+
+    if ok and type(data) == "table" then
+        config.autoLoad = data.autoLoad == true
+        config.lastOutfit = tostring(data.lastOutfit or "")
+    end
+end
+
+-- Properties to save
+
+local DESCRIPTION_PROPERTIES = {
+    "BackAccessory",
+    "FaceAccessory",
+    "FrontAccessory",
+    "HairAccessory",
+    "HatAccessory",
+    "NeckAccessory",
+    "ShoulderAccessory",
+    "WaistAccessory",
+
+    "Shirt",
+    "Pants",
+    "GraphicTShirt",
+    "Face",
+
+    "Head",
+    "Torso",
+    "LeftArm",
+    "RightArm",
+    "LeftLeg",
+    "RightLeg",
+
+    "BodyTypeScale",
+    "DepthScale",
+    "HeadScale",
+    "HeightScale",
+    "ProportionScale",
+    "WidthScale",
+
+    "HeadColor",
+    "LeftArmColor",
+    "LeftLegColor",
+    "RightArmColor",
+    "RightLegColor",
+    "TorsoColor"
+}
+
+local COLOR_PROPERTIES = {
+    HeadColor = true,
+    LeftArmColor = true,
+    LeftLegColor = true,
+    RightArmColor = true,
+    RightLegColor = true,
+    TorsoColor = true
+}
+
+local function getCurrentHumanoid()
+    local char = player.Character
+    if not char then return nil end
+
+    return char:FindFirstChildOfClass("Humanoid")
+end
+
+-- Serialize current outfit
+
+local function captureOutfit()
+    local currentHumanoid = getCurrentHumanoid()
+
+    if not currentHumanoid then
+        return nil, "Character not found"
+    end
+
+    local success, description = pcall(function()
+        return currentHumanoid:GetAppliedDescription()
+    end)
+
+    if not success or not description then
+        return nil, "Could not get HumanoidDescription"
+    end
+
+    local data = {
+        Properties = {},
+        Accessories = {},
+    }
+
+	data.Assets = table.clone(wornAssetIds)
+
+    for _, property in ipairs(DESCRIPTION_PROPERTIES) do
+        local ok, value = pcall(function()
+            return description[property]
+        end)
+
+        if ok then
+            if COLOR_PROPERTIES[property] then
+                data.Properties[property] = {
+                    R = value.R,
+                    G = value.G,
+                    B = value.B
+                }
+            else
+                data.Properties[property] = value
+            end
+        end
+    end
+
+    local accessoriesOK, accessories = pcall(function()
+        return description:GetAccessories(true)
+    end)
+
+    if accessoriesOK then
+        for _, accessory in ipairs(accessories) do
+            table.insert(data.Accessories, {
+                AssetId = accessory.AssetId,
+                AccessoryType = accessory.AccessoryType.Name,
+                IsLayered = accessory.IsLayered,
+                Order = accessory.Order,
+                Puffiness = accessory.Puffiness
+            })
+        end
+    end
+
+    description:Destroy()
+
+    return data
+end
+
+-- Save outfit
+
+local function saveOutfit(name)
+    name = safeName(name)
+
+    if name == "" then
+        log("Invalid outfit name", true)
+        return false
+    end
+
+    if not ensureFolders() then
+        log("File API unavailable", true)
+        return false
+    end
+
+    local data, err = captureOutfit()
+
+    if not data then
+        log(err, true)
+        return false
+    end
+
+    local ok, result = pcall(function()
+        writefile(
+            outfitPath(name),
+            HttpService:JSONEncode(data)
+        )
+    end)
+
+    if not ok then
+        log("Failed to save: " .. tostring(result), true)
+        return false
+    end
+
+    config.lastOutfit = name
+    saveConfig()
+
+    log("Saved outfit: " .. name, false)
+    return true
+end
+
+-- Load outfit
+
+local function loadOutfit(name, silent)
+    name = safeName(name)
+
+    if name == "" then
+        if not silent then
+            log("Enter an outfit name", true)
+        end
+        return false
+    end
+
+    if not ensureFolders() then
+        if not silent then
+            log("File API unavailable", true)
+        end
+        return false
+    end
+
+    local path = outfitPath(name)
+
+    if not isfile(path) then
+        if not silent then
+            log("Outfit not found: " .. name, true)
+        end
+        return false
+    end
+
+    local ok, data = pcall(function()
+        return HttpService:JSONDecode(readfile(path))
+    end)
+
+    if not ok or type(data) ~= "table" then
+        log("Invalid outfit file", true)
+        return false
+    end
+
+    local currentHumanoid = getCurrentHumanoid()
+
+    if not currentHumanoid then
+        log("Character not found", true)
+        return false
+    end
+
+    local description = Instance.new("HumanoidDescription")
+
+    -- Restore properties
+
+    for property, value in pairs(data.Properties or {}) do
+        pcall(function()
+            if COLOR_PROPERTIES[property] then
+                description[property] = Color3.new(
+                    value.R,
+                    value.G,
+                    value.B
+                )
+            else
+                description[property] = value
+            end
+        end)
+    end
+
+    -- Restore layered and classic accessories
+
+    local accessories = {}
+
+    for _, item in ipairs(data.Accessories or {}) do
+        local accessoryType = Enum.AccessoryType[item.AccessoryType]
+
+        if accessoryType then
+            table.insert(accessories, {
+                AssetId = item.AssetId,
+                AccessoryType = accessoryType,
+                IsLayered = item.IsLayered == true,
+                Order = item.Order or 0,
+                Puffiness = item.Puffiness or 0
+            })
+        end
+    end
+
+    pcall(function()
+        description:SetAccessories(accessories, true)
+    end)
+
+    -- Apply to character
+
+    local applied, applyError = pcall(function()
+        currentHumanoid:ApplyDescription(description)
+    end)
+
+	description:Destroy()
+	
+	if not applied then
+	    log("Apply failed: " .. tostring(applyError), true)
+	    return false
+	end
+	
+	-- Restore manually loaded assets
+	
+	wornAssetIds = {}
+	isRestoringOutfit = true
+	
+	for _, assetId in ipairs(data.Assets or {}) do
+	    local ok, err = wearAsset(assetId)
+	
+	    if not ok then
+	        log("Asset restore failed: " .. tostring(assetId), true)
+	    end
+	end
+	
+	isRestoringOutfit = false
+	
+	config.lastOutfit = name
+	saveConfig()
+	
+	log("Loaded outfit: " .. name, false)
+	return true
+end
+
+-- Delete outfit
+
+local function deleteOutfit(name)
+    name = safeName(name)
+
+    if name == "" then
+        log("Enter an outfit name", true)
+        return false
+    end
+
+    local path = outfitPath(name)
+
+    if not isfile(path) then
+        log("Outfit not found: " .. name, true)
+        return false
+    end
+
+    local ok, err = pcall(function()
+        delfile(path)
+    end)
+
+    if not ok then
+        log("Delete failed: " .. tostring(err), true)
+        return false
+    end
+
+    if config.lastOutfit == name then
+        config.lastOutfit = ""
+        config.autoLoad = false
+        saveConfig()
+        AutoLoadBtn.Text = "Auto Load: OFF"
+    end
+
+    log("Deleted outfit: " .. name, false)
+    return true
+end
+
+-- Initialize storage
+
+ensureFolders()
+loadConfig()
+
+AutoLoadBtn.Text = config.autoLoad
+    and "Auto Load: ON"
+    or "Auto Load: OFF"
+
 -- ================================
 -- BUTTON LOGIC
 -- ================================
@@ -480,6 +978,86 @@ end
 buttonHover(WearBtn, Color3.fromRGB(130, 100, 255), Color3.fromRGB(100, 80, 255))
 buttonHover(ClearBtn, Color3.fromRGB(35, 35, 50), Color3.fromRGB(25, 25, 35))
 buttonHover(CloseBtn, Color3.fromRGB(255, 60, 60), Color3.fromRGB(40, 40, 50))
+
+-- ================================
+-- OUTFIT BUTTON LOGIC
+-- ================================
+
+buttonHover(
+    SaveOutfitBtn,
+    Color3.fromRGB(130, 100, 255),
+    Color3.fromRGB(100, 80, 255)
+)
+
+buttonHover(
+    LoadOutfitBtn,
+    Color3.fromRGB(80, 125, 210),
+    Color3.fromRGB(60, 100, 180)
+)
+
+buttonHover(
+    DeleteOutfitBtn,
+    Color3.fromRGB(190, 55, 65),
+    Color3.fromRGB(150, 45, 55)
+)
+
+-- SAVE
+
+SaveOutfitBtn.MouseButton1Click:Connect(function()
+    saveOutfit(OutfitNameBox.Text)
+end)
+
+-- LOAD
+
+LoadOutfitBtn.MouseButton1Click:Connect(function()
+    loadOutfit(OutfitNameBox.Text, false)
+end)
+
+-- DELETE
+
+DeleteOutfitBtn.MouseButton1Click:Connect(function()
+    deleteOutfit(OutfitNameBox.Text)
+end)
+
+-- AUTO LOAD TOGGLE
+
+AutoLoadBtn.MouseButton1Click:Connect(function()
+
+    if not config.autoLoad then
+
+        local name = safeName(OutfitNameBox.Text)
+
+        if config.lastOutfit == "" and name ~= "" then
+            config.lastOutfit = name
+        end
+
+        if config.lastOutfit == "" then
+            log("Save or load an outfit first", true)
+            return
+        end
+
+        if not isfile(outfitPath(config.lastOutfit)) then
+            log("Selected outfit does not exist", true)
+            return
+        end
+
+        config.autoLoad = true
+
+    else
+        config.autoLoad = false
+    end
+
+    saveConfig()
+
+    AutoLoadBtn.Text = config.autoLoad
+        and "Auto Load: ON"
+        or "Auto Load: OFF"
+
+    log(
+        config.autoLoad and "Auto Load enabled" or "Auto Load disabled",
+        false
+    )
+end)
 
 WearBtn.MouseButton1Click:Connect(function()
 	local id = tonumber(InputBox.Text)
@@ -570,3 +1148,30 @@ end)
 -- ================================
 
 log("✔ 3s hub loaded!", false)
+
+-- ================================
+-- AUTOMATIC OUTFIT LOADER
+-- ================================
+
+if config.autoLoad and config.lastOutfit ~= "" then
+
+    task.spawn(function()
+
+        task.wait(1)
+
+        local currentCharacter = player.Character
+            or player.CharacterAdded:Wait()
+
+        currentCharacter:WaitForChild("Humanoid")
+
+        local success = loadOutfit(config.lastOutfit, true)
+
+        if success then
+            log("✔ Auto-loaded: " .. config.lastOutfit, false)
+        else
+            log("✘ Auto Load failed", true)
+        end
+
+    end)
+
+end
